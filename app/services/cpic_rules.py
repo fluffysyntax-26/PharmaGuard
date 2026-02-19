@@ -97,17 +97,17 @@ CPIC_RULES = {
 
     "SIMVASTATIN": {
         "SLCO1B1": {
-            "Normal Function": {
+            "Normal": {
                 "risk_label": "Safe",
                 "severity": "none",
                 "recommendation": "Use standard dosing."
             },
-            "Decreased Function": {
+            "Decreased": {
                 "risk_label": "Myopathy Risk",
                 "severity": "moderate",
                 "recommendation": "Use lower dose or consider alternative statin."
             },
-            "Poor Function": {
+            "Poor": {
                 "risk_label": "Toxic",
                 "severity": "high",
                 "recommendation": "Avoid high doses. Consider alternative statin."
