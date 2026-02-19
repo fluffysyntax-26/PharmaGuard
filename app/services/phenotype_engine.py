@@ -1,52 +1,51 @@
 from collections import defaultdict
 from app.config.constants import STAR_PHENOTYPE_MAP, SUPPORTED_GENES
 
-
 def build_profile(variants):
-    """
-    Build pharmacogenomic profile from detected variants.
-    Automatically assumes *1 allele where no variant is detected.
-    """
+    # 1. Initialize all supported genes with an empty baseline
+    gene_data = {
+        gene: {"stars": [], "rsids": [], "genotypes": []} 
+        for gene in SUPPORTED_GENES
+    }
 
-    gene_data = defaultdict(lambda: {
-        "stars": [],
-        "rsids": []
-    })
-
-    # Collect detected star alleles per gene
+    # 2. Collect variants per gene (only true mutations passed from parse_vcf)
     for variant in variants:
         gene = variant["gene"]
-        star = variant["star"]
-        rsid = variant["rsid"]
-
-        if gene not in SUPPORTED_GENES:
-            continue
-
-        gene_data[gene]["stars"].append(star)
-        gene_data[gene]["rsids"].append(rsid)
+        if gene in gene_data:
+            gene_data[gene]["stars"].append(variant["star"])
+            gene_data[gene]["rsids"].append(variant["rsid"])
+            # Safely get genotype, default to heterozygous 0/1 if missing
+            gene_data[gene]["genotypes"].append(variant.get("genotype", "0/1"))
 
     profile = {}
 
-    # Ensure all supported genes are represented
-    for gene in SUPPORTED_GENES:
+    for gene, data in gene_data.items():
+        stars = data["stars"]
+        rsids = data["rsids"]
+        genotypes = data["genotypes"]
 
-        stars = gene_data[gene]["stars"]
-        rsids = gene_data[gene]["rsids"]
-
-        # If no variants detected → assume *1/*1
-        if not stars:
-            diplotype = "*1/*1"
-            phenotype = resolve_phenotype(gene, ["*1", "*1"])
-
-        # If single variant detected → assume *1 + variant
+        # 3. Build diplotype with baseline *1 logic
+        if len(stars) == 0:
+            # No mutations found -> Patient is Wild-Type
+            diplotype_alleles = ["*1", "*1"]
+            
         elif len(stars) == 1:
-            diplotype = f"*1/{stars[0]}"
-            phenotype = resolve_phenotype(gene, ["*1", stars[0]])
-
-        # If two variants detected → assume they represent two alleles
+            # One mutation found -> Check if Heterozygous (0/1) or Homozygous (1/1)
+            gt = genotypes[0]
+            if gt in ["1/1", "1|1"]:
+                diplotype_alleles = [stars[0], stars[0]]
+            else:
+                # Heterozygous means they have one normal *1 allele and one mutated allele
+                diplotype_alleles = ["*1", stars[0]]
+                
         else:
-            diplotype = f"{stars[0]}/{stars[1]}"
-            phenotype = resolve_phenotype(gene, stars[:2])
+            # Multiple mutations found
+            diplotype_alleles = [stars[0], stars[1]]
+
+        diplotype = f"{diplotype_alleles[0]}/{diplotype_alleles[1]}"
+        
+        # Resolve phenotype using the two determined alleles
+        phenotype = resolve_phenotype(gene, diplotype_alleles)
 
         profile[gene] = {
             "diplotype": diplotype,
@@ -57,38 +56,27 @@ def build_profile(variants):
     return profile
 
 
-def resolve_phenotype(gene, stars):
-    """
-    Resolve phenotype from diplotype using simplified CPIC-consistent hierarchy.
-    """
-
+def resolve_phenotype(gene, alleles):
     mapping = STAR_PHENOTYPE_MAP.get(gene, {})
 
-    phenotypes = [mapping.get(star, "NM") for star in stars]
+    if not alleles:
+        return "Unknown"
 
-    # --- CYP genes & TPMT & DPYD ---
-    if gene in ["CYP2D6", "CYP2C19", "CYP2C9", "TPMT", "DPYD"]:
+    # Map each allele in the diplotype to its functional status
+    phenotypes = [mapping.get(allele, "Unknown") for allele in alleles]
 
-        # Two poor function alleles
-        if phenotypes.count("PM") == 2:
-            return "PM"
-
-        # One poor allele OR one intermediate allele
-        if "PM" in phenotypes or "IM" in phenotypes:
-            return "IM"
-
+    # Simplified risk logic (Highest severity dominates)
+    if "PM" in phenotypes:
+        return "PM"
+    if "Poor" in phenotypes:
+        return "Poor"
+    if "IM" in phenotypes:
+        return "IM"
+    if "Decreased" in phenotypes:
+        return "Decreased"
+    if "Normal" in phenotypes:
+        return "Normal"
+    if "NM" in phenotypes:
         return "NM"
 
-    # --- SLCO1B1 ---
-    if gene == "SLCO1B1":
-
-        if phenotypes.count("Poor") == 2:
-            return "Poor Function"
-
-        if "Poor" in phenotypes or "Decreased" in phenotypes:
-            return "Decreased Function"
-
-        return "Normal Function"
-
-    # Fallback
-    return "NM"
+    return "Unknown"
