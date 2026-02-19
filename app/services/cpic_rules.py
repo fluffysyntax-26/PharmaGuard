@@ -154,17 +154,17 @@ CPIC_RULES = {
 
     "FLUOROURACIL": {
         "DPYD": {
-            "Normal Metabolizer": {
+            "NM": {
                 "risk_label": "Safe",
                 "severity": "none",
                 "recommendation": "Use standard dosing."
             },
-            "Intermediate Metabolizer": {
+            "IM": {
                 "risk_label": "Adjust Dosage",
                 "severity": "high",
                 "recommendation": "Reduce starting dose by 25–50% and titrate."
             },
-            "Poor Metabolizer": {
+            "PM": {
                 "risk_label": "Toxic",
                 "severity": "critical",
                 "recommendation": "Avoid fluorouracil due to severe toxicity risk."
