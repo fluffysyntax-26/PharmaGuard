@@ -1,12 +1,22 @@
 import os
-import requests
 import json
+from dotenv import load_dotenv
+from google import genai
+from google.genai.types import GenerateContentConfig
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent"
+# Load environment variables
+load_dotenv()
 
 
 def generate_explanation(gene, drug, phenotype, risk_label, recommendation, rsids):
+
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in environment.")
+
+    # Create Gemini client
+    client = genai.Client(api_key=api_key)
 
     prompt = f"""
 You are a clinical pharmacogenomics expert.
@@ -16,58 +26,52 @@ Drug: {drug}
 Phenotype: {phenotype}
 Risk Classification: {risk_label}
 CPIC Recommendation: {recommendation}
-Detected Variants: {", ".join(rsids)}
+Detected Variants: {', '.join(rsids)}
 
-Respond ONLY in valid JSON format with the following keys:
+Respond ONLY in valid JSON with these exact keys:
 summary
 biological_mechanism
 clinical_impact
 cpic_alignment_note
 variant_citations
 
-Do not include markdown formatting.
-Return only JSON.
+Return strictly valid JSON. No markdown. No explanation outside JSON.
 """
 
     try:
-        response = requests.post(
-        f"{GEMINI_URL}?key={GEMINI_API_KEY}",
-        headers={"Content-Type": "application/json"},
-        json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 600
-            }
-        },
-        timeout=20
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+            config=GenerateContentConfig(
+                temperature=0.2,
+                max_output_tokens=600,
+            )
         )
 
-        print("Status:", response.status_code)
-        print("Response Text:", response.text)
+        # Extract model output text
+        text_output = response.text.strip()
 
-        response.raise_for_status()
+        # Remove accidental markdown wrapping
+        text_output = (
+            text_output
+            .replace("```json", "")
+            .replace("```", "")
+            .strip()
+        )
 
-        result = response.json()
+        # Parse JSON safely
+        explanation = json.loads(text_output)
 
-        if "candidates" not in result:
-            return {"error": result}
-
-        text_output = result["candidates"][0]["content"]["parts"][0]["text"]
-
-        text_output = text_output.strip().replace("```json", "").replace("```", "")
-
-        return json.loads(text_output)
+        return explanation
 
     except Exception as e:
-        print("EXCEPTION:", str(e))
-    
-    return {
-        "summary": "Explanation unavailable due to service issue.",
-        "biological_mechanism": "N/A",
-        "clinical_impact": "N/A",
-        "cpic_alignment_note": "Generated using CPIC-aligned deterministic logic.",
-        "variant_citations": rsids,
-        "exception": str(e)
-    }
+        print("Gemini Error:", e)
 
+        # Safe fallback response
+        return {
+            "summary": "Explanation currently unavailable.",
+            "biological_mechanism": "N/A",
+            "clinical_impact": "N/A",
+            "cpic_alignment_note": "Used CPIC-aligned rules for generation.",
+            "variant_citations": rsids
+        }
