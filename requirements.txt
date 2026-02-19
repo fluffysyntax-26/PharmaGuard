@@ -1,8 +1,7 @@
-vcfpy==0.13.8
-pysam==0.22.0  # Optional but highly recommended backend for vcfpy
 fastapi
 uvicorn
 pydantic
 python-multipart
 requests
 python-dotenv
+google-genai

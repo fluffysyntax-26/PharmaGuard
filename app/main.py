@@ -6,6 +6,7 @@ from app.routes import validate
 from app.routes import profile
 from app.routes import risk
 from app.routes import explanation
+from app.routes import full_analysis
 
 from dotenv import load_dotenv
 import os
@@ -46,5 +47,6 @@ app.include_router(validate.router)
 app.include_router(profile.router)
 app.include_router(risk.router)
 app.include_router(explanation.router)
+app.include_router(full_analysis.router)
 
 
