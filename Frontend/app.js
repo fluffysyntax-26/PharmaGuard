@@ -1,10 +1,7 @@
-(() => {
-  const API_BASE =
-    window.PHARMAGUARD_API_BASE ||
-    (window.location.port === "8000"
-      ? window.location.origin
-      : "http://127.0.0.1:8000");
-
+ (() => {
+  // Simply use the current origin since the frontend and backend are hosted together!
+  const API_BASE = window.location.origin;
+  // ... rest of your code stays exactly the same
   const fileInput = document.getElementById("vcf-file-input");
   const browseBtn = document.getElementById("browse-btn");
   const dropArea = document.getElementById("drop-area");
