@@ -6,8 +6,8 @@ PharmaGuard is an interpretable AI system that predicts patient-specific drug re
 
 ## 🔗 Links
 
-- **Live Demo**: [Insert Live URL Here]
-- **LinkedIn Video Presentation**: [Insert LinkedIn Video URL Here]
+- **Live Demo**: https://pharmaguard-production.up.railway.app
+- **LinkedIn Video Presentation**: https://www.linkedin.com/posts/ruthvik-np-519169297_rift2026-pharmaguard-pharmacogenomics-activity-7430437360489758720-0OyO?utm_source=share&utm_medium=member_android&rcm=ACoAAEe_oaUB2heXaWNKmNEZCe9ww_qaKLyo78E
 
 ## 🏗 Architecture Overview
 
@@ -69,7 +69,7 @@ To run PharmaGuard locally, follow these steps:
 
 Navigate to `http://127.0.0.1:8000/` to view the application.
 
-## 🚀 Deployment Instructions
+## Deployment Instructions
 
 ### Option A: Railway (Recommended)
 
