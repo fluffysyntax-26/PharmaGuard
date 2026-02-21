@@ -7,7 +7,6 @@ PharmaGuard is an interpretable AI system that predicts patient-specific drug re
 ## 🔗 Links
 
 - **Live Demo**: https://pharmaguard-production.up.railway.app
-- **LinkedIn Video Presentation**: https://www.linkedin.com/posts/ruthvik-np-519169297_rift2026-pharmaguard-pharmacogenomics-activity-7430437360489758720-0OyO?utm_source=share&utm_medium=member_android&rcm=ACoAAEe_oaUB2heXaWNKmNEZCe9ww_qaKLyo78E
 
 ## 🏗 Architecture Overview
 
